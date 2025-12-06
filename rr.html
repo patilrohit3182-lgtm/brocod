@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BroCode | The Ultimate Coding Challenge</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --dark-bg: #050505;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, .brand {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        ul { list-style: none; }
+
+        /* --- 3D CANVAS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--neon-blue);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--neon-purple);
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover::after { width: 100%; }
+
+        .btn-cta {
+            padding: 10px 25px;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.3s;
+            background: transparent;
+        }
+
+        .btn-cta:hover {
+            background: var(--neon-blue);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        /* --- SECTIONS GENERAL --- */
+        section {
+            padding: 100px 10%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            margin-bottom: 50px;
+            text-align: center;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- HERO SECTION --- */
+        #hero {
+            align-items: flex-start;
+            height: 100vh;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            z-index: 1;
+        }
+
+        .hero-tag {
+            color: var(--neon-purple);
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .hero-title {
+            font-size: 5rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            font-weight: 900;
+        }
+
+        .hero-desc {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 600px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn-primary {
+            padding: 15px 40px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            color: white;
+            font-family: 'Orbitron';
+            font-weight: 700;
+            cursor: pointer;
+            clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+            transition: 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(188, 19, 254, 0.5);
+        }
+
+        /* --- CARDS (About & Tracks) --- */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 40px;
+            border-radius: 15px;
+            transition: 0.5s;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+            transform-style: preserve-3d;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(5deg);
+            border-color: var(--neon-blue);
+            box-shadow: 0 10px 30px rgba(0, 243, 255, 0.1);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--neon-blue);
+        }
+
+        /* --- REGISTRATION FORM --- */
+        .reg-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 50px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: white;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+            font-family: 'Inter';
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
+        }
+
+        .form-group label {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .form-group input:focus ~ label,
+        .form-group input:valid ~ label {
+            top: -10px;
+            left: 10px;
+            font-size: 0.7rem;
+            color: var(--neon-blue);
+            background: var(--dark-bg);
+            padding: 0 5px;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            padding: 50px 10%;
+            background: black;
+            border-top: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: 'Orbitron';
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .socials span {
+            margin: 0 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .socials span:hover { color: var(--neon-blue); }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 3rem; }
+            nav { padding: 20px; }
+            .nav-links { display: none; }
+            section { padding: 80px 5%; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <nav>
+        <div class="brand">BroCode_</div>
+        <ul class="nav-links">
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#tracks">Tracks</a></li>
+            <li><a href="#register">Register</a></li>
+        </ul>
+        <button class="btn-cta">Join Discord</button>
+    </nav>
+
+    <section id="hero">
+        <div class="hero-content">
+            <span class="hero-tag">// EVENT_DATE: 2025.10.15</span>
+            <h1 class="hero-title">CODE.<br>CREATE.<br><span style="color: var(--neon-blue)">DOMINATE.</span></h1>
+            <p class="hero-desc">The ultimate national-level coding hackathon. Build the future in 48 hours of pure adrenaline, caffeine, and code.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary" onclick="document.getElementById('register').scrollIntoView()">REGISTER NOW</button>
+                <button class="btn-cta">VIEW AGENDA</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <h2 class="section-title">The Mission</h2>
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">⚡</div>
+                <h3>High Intensity</h3>
+                <p>48 hours of non-stop coding. Push your limits and build something extraordinary under pressure.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🌐</div>
+                <h3>Networking</h3>
+                <p>Connect with industry leaders, mentors, and fellow developers from top universities.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🏆</div>
+                <h3>Mega Prizes</h3>
+                <p>Win cash prizes worth ₹1,00,000, exclusive internships, and premium dev swag.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="tracks">
+        <h2 class="section-title">Competition Tracks</h2>
+        <div class="cards-grid">
+            <div class="card" style="border-top: 3px solid var(--neon-blue)">
+                <h3>AI & ML</h3>
+                <p>Build intelligent systems using GenAI, computer vision, or predictive analytics.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--neon-purple)">
+                <h3>Web 3.0 & Blockchain</h3>
+                <p>Decentralize the future with dApps, Smart Contracts, and DeFi solutions.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid #ff0055">
+                <h3>Open Innovation</h3>
+                <p>No limits. Solve real-world problems using any tech stack you prefer.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="register">
+        <h2 class="section-title">Initialize Sequence</h2>
+        <div class="reg-container">
+            <form>
+                <div class="form-group">
+                    <input type="text" required>
+                    <label>Team Name</label>
+                </div>
+                <div class="form-group">
+                    <input type="email" required>
+                    <label>Leader Email</label>
+                </div>
+                <div class="form-group">
+                    <select style="color: #a0a0a0">
+                        <option>Select Track</option>
+                        <option>AI/ML</option>
+                        <option>Web3</option>
+                        <option>Open Innovation</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-primary" style="width: 100%">SUBMIT APPLICATION</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo">BroCode_<span style="color: var(--neon-blue)">2025</span></div>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Designed for the next generation of developers.</p>
+        <div class="socials">
+            <span>INSTAGRAM</span>
+            <span>LINKEDIN</span>
+            <span>GITHUB</span>
+        </div>
+        <p style="margin-top: 50px; font-size: 0.8rem; color: #444;">&copy; 2025 BroCode Event. All Systems Operational.</p>
+    </footer>
+
+    <script>
+        // --- THREE.JS BACKGROUND ANIMATION ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Create Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 15; // Spread
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        // Material for Particles
+        const material = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0x00f3ff,
+            transparent: true,
+            opacity: 0.8,
+        });
+
+        // Create Mesh
+        const particlesMesh = new THREE.Points(particlesGeometry, material);
+        scene.add(particlesMesh);
+
+        // Add a central Geometric Shape (Wireframe)
+        const geoGeometry = new THREE.IcosahedronGeometry(2, 0);
+        const geoMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xbc13fe, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const geoMesh = new THREE.Mesh(geoGeometry, geoMaterial);
+        scene.add(geoMesh);
+
+        camera.position.z = 5;
+
+        // Mouse Interaction
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        });
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Rotate entire system
+            particlesMesh.rotation.y = elapsedTime * 0.05;
+            geoMesh.rotation.x += 0.002;
+            geoMesh.rotation.y += 0.002;
+
+            // Mouse parallax
+            particlesMesh.rotation.x = mouseY * 0.00008;
+            particlesMesh.rotation.y = mouseX * 0.00008;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- GSAP ANIMATIONS ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Animations
+        gsap.from(".hero-title", {
+            duration: 1.5,
+            y: 100,
+            opacity: 0,
+            ease: "power4.out",
+            delay: 0.2
+        });
+        
+        gsap.from(".hero-desc", {
+            duration: 1.5,
+            y: 50,
+            opacity: 0,
+            ease: "power3.out",
+            delay: 0.6
+        });
+
+        gsap.from(".hero-buttons", {
+            duration: 1.5,
+            y: 50,
+            opacity: 0,
+            ease: "power3.out",
+            delay: 0.8
+        });
+
+        // Scroll Animations for Cards
+        gsap.utils.toArray('.card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: "top 85%",
+                },
+                y: 100,
+                opacity: 0,
+                duration: 0.8,
+                delay: i * 0.1,
+                ease: "power2.out"
+            });
+        });
+
+        // Section Title Animation
+        gsap.utils.toArray('.section-title').forEach(title => {
+            gsap.from(title, {
+                scrollTrigger: {
+                    trigger: title,
+                    start: "top 80%",
+                },
+                scale: 0.8,
+                opacity: 0,
+                duration: 1,
+                ease: "elastic.out(1, 0.5)"
+            });
+        });
+
+        // Simple Card Tilt Effect (Vanilla JS)
+        const cards = document.querySelectorAll('.card');
+        
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10; // Max 10deg rotation
+                const rotateY = ((x - centerX) / centerX) * 10;
+
+                card.style.transform = perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02);
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = perspective(1000px) rotateX(0) rotateY(0) scale(1);
+            });
+        });
+    </script>
+</body>
+</html>
